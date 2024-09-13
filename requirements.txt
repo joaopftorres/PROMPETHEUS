@@ -1,0 +1,15 @@
+sentence-transformers==3.1.0
+sentencepiece==0.2.0
+transformers==4.44.2
+fpdf==1.7.2
+unicode_tr==0.6.1
+arxiv==2.1.3
+bertopic==0.16.3
+keybert==0.8.5
+openai==1.45.0
+rouge_score==0.1.2
+textstat==0.7.4
+nltk==3.9.1
+spacy==3.7.6
+wonderwords==2.2.0
+kaleido==0.2.1
