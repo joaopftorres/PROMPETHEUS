@@ -3,7 +3,7 @@ import pprint
 import re
 import sys
 import time
-from cleaner import clean
+from cleaner import clean_text
 
 def search_arxiv(query, max_retries=3, retry_delay=5):
     search = arxiv.Search(
@@ -31,7 +31,7 @@ def search_arxiv(query, max_retries=3, retry_delay=5):
                     article["id"] = paper_id
                     article["title"] = result.title
                     article["abstract"] = result.summary
-                    article["clean_abstract"] = clean(result.summary)
+                    article["clean_abstract"] = clean_text(result.summary)
                     articles.append(article)
                 else:
                     print("Invalid paper ID:", paper_id)
@@ -46,14 +46,3 @@ def search_arxiv(query, max_retries=3, retry_delay=5):
 
     print("Max retries reached. Exiting search.")
     return articles
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python arxiv_search.py <query>")
-        sys.exit(1)
-
-    query = ' '.join(sys.argv[1:])
-    articles = search_arxiv(query)
-    print("\n\nRESULT\n")
-    pprint.pprint(articles)

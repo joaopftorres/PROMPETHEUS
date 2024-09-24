@@ -2,7 +2,7 @@ from bertopic.representation import KeyBERTInspired
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
-from gpt import *
+from prompts import get_title
 
 
 def create_topic_model(docs, model):
@@ -48,7 +48,7 @@ def topic_model_pipeline(docs, model, gpt_model="gpt-3.5-turbo"):
     topic_keywords = ", ".join(topic_n)
     topic_report += topic_keywords+"\n"
     
-    topic_title=get_title_gpt(topic_keywords, gpt_model)
+    topic_title=get_title(topic_keywords, gpt_model)
     topic_titles.append(topic_title)
   gen_titles=f"Generated topic titles:\n{topic_titles}"
   topic_report += "\n" +f"Generated topic titles:\n{topic_titles}"

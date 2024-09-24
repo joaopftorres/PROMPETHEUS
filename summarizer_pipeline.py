@@ -1,4 +1,4 @@
-from gpt import *
+from prompts import post_edit
 
 def summarize(topic_model, dfs_by_topic, summarizer, bib_tex_keys, paper_names):
   topic_summaries=[]
@@ -18,6 +18,6 @@ def summarize(topic_model, dfs_by_topic, summarizer, bib_tex_keys, paper_names):
 def improve_summary(topic_summaries, topic_titles, title, model = "gpt-3.5-turbo"):
   sums = []
   for i in range(len(topic_summaries)):
-    sum = post_edit_gpt(topic_summaries[i], topic_titles[i], title, model)
+    sum = post_edit(topic_summaries[i], topic_titles[i], title, model)
     sums.append(sum)
   return sums

@@ -1,4 +1,5 @@
 import re
+
 from unicode_tr.extras import slugify
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
