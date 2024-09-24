@@ -239,7 +239,10 @@ def create_latex_document(title, number_sections, final_summary, section_names, 
                 """}
         ]
     )
-    return completion.choices[0].message.content
+    # Remove ```latex and ``` markers from the response content
+    latex_document = completion.choices[0].message.content.strip().replace("```latex", "").replace("```", "").strip()
+
+    return latex_document
 
 
 

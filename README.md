@@ -82,7 +82,7 @@ This example refines a literature review on the topic "AI in Healthcare" using G
 - cleaner.py: Module for cleaning and processing text data.
 - topic_model.py: Module for performing topic modeling on the retrieved papers.
 - summarizer_pipeline.py: Module for summarizing and refining text using GPT models.
-- tex_to_pdf.py: Module for generating LaTeX documents from the refined summaries.
+- file_saver.py: Module to save files.
 - metrics.py: Module for calculating ROUGE, readability, and similarity metrics.
 
 
