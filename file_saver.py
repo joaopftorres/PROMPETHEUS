@@ -62,21 +62,3 @@ def get_arxiv_bibtex(arxiv_id):
     lines.insert(-1, f"      url = {{https://arxiv.org/abs/{arxiv_id}}},")
 
     return "\n".join(lines) + "\n"  # Add newline at the end for better formatting
-
-
-def save_to_pdf(latex_doc, title, info=""):
-  save_to_tex(latex_doc, title)
-  
-  # Compile LaTeX to PDF within the 'output' directory
-
-  command='!pdflatex -output-directory="output/$title" "output/$title/$title-literature_review.tex"'
-  subprocess.check_output(command)
-
-  # Delete files that are not .tex or .pdf within the directory
-  for filename in os.listdir(f"output/{title}"):
-      if not filename.endswith((".tex", ".pdf")):
-          os.remove(os.path.join(f"output/{title}", filename))
-
-  # (Optional) Display a confirmation message
-  print(f"PDF saved and unnecessary files removed in 'output/{title}/'")
-
