@@ -186,7 +186,7 @@ def run_metrics(title, joint_title, articles, selected_index, improve_summaries,
         "GPT_edited_summary": get_rouge(raw_abstracts, final_summary),
         "SLR": get_rouge(raw_abstracts, de_latexed_doc)
     }
-    save_text(str(rouge_scores), "rouge_metrics", joint_title, "metrics")
+    save_text(rouge_scores, "rouge_metrics", joint_title, "metrics")
 
     # Readability Metrics
     readability_scores = {
@@ -194,7 +194,7 @@ def run_metrics(title, joint_title, articles, selected_index, improve_summaries,
         "GPT_edited_summary": readability.getmeasures(tokenit(final_summary), lang='en')['readability grades'],
         "SLR": readability.getmeasures(tokenit(de_latexed_doc), lang='en')['readability grades']
     }
-    save_text(str(readability_scores), "readability_metrics", joint_title, "metrics")
+    save_text(readability_scores, "readability_metrics", joint_title, "metrics")
 
     # Similarity Metrics
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')

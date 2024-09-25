@@ -1,6 +1,7 @@
 import os
 import subprocess
 import requests
+import json
 
 def save_text(text, filename, title, doc_type=None, info=""):
   path_name = title+info
@@ -29,6 +30,9 @@ def save_text(text, filename, title, doc_type=None, info=""):
   elif doc_type == "bib":
     with open(f'output/{path_name}/{directory}/{filename}.bib', 'a') as f:
       f.write(text + '\n')
+  elif doc_type == "metrics":
+    with open(f'output/{path_name}/{directory}/{filename}.txt', 'w') as f:
+      f.write(json.dumps(text, indent=4))
   else:
     with open(f'output/{path_name}/{directory}/{filename}.txt', 'w') as f:
         f.write(text)

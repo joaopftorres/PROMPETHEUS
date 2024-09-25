@@ -37,10 +37,6 @@ def search_arxiv(query, max_retries=10, retry_delay=5, target_num_papers=200):
                     articles.append(article)
                     num_papers_found += 1
 
-                # Stop early if target number of papers is reached
-                if num_papers_found >= target_num_papers:
-                    break
-
         except arxiv.UnexpectedEmptyPageError:
             print("No more results found. Retrying...")
 
@@ -51,7 +47,7 @@ def search_arxiv(query, max_retries=10, retry_delay=5, target_num_papers=200):
         retries += 1
         time.sleep(retry_delay)
 
-    print(f"Max retries reached. Found {num_papers_found} papers.")
+    print(f"Max retries reached querying arxiv.")
     return articles
 
 def extract_paper_id(entry_id):
