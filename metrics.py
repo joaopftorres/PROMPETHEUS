@@ -17,22 +17,8 @@ def get_rouge(original, summarized):
   # Compute ROUGE scores
   scores = scorer.score(original, summarized)
   return {"precision": scores['rouge1'].precision, "recall": scores['rouge1'].recall, "f1": scores['rouge1'].fmeasure }
-
-def save_text(text, filename, title, info=""):
-  path_name = title+info
-  # Create 'summaries' directory if it doesn't exist
-  if not os.path.exists('summaries'):
-      os.makedirs('summaries')
-
-  if not os.path.exists(f'summaries/{path_name}'):
-      os.makedirs(f'summaries/{path_name}')
-
-  if not os.path.exists(f'summaries/{path_name}/results'):
-      os.makedirs(f'summaries/{path_name}/results')
-
-  with open(f'summaries/{path_name}/results/{filename}.txt', 'w') as f:
-      f.write(text)
-
+    
+      
 def tokenit(working_txt):
   # clean text by removing successive white space and line breaks
   clean_txt = re.sub(r"\n", " ", working_txt)

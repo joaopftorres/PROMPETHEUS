@@ -14,8 +14,8 @@ from query_arxiv import search_arxiv
 from cleaner import clean_text, cut_papers
 from topic_model import topic_model_pipeline
 from summarizer_pipeline import summarize, improve_summary
-from tex_to_pdf import save_to_tex, get_arxiv_bibtex, save_bibtex
-from metrics import get_rouge, get_coherence, tokenit, gen_sentence, save_text
+from file_saver import get_arxiv_bibtex, save_text
+from metrics import get_rouge, get_coherence, tokenit, gen_sentence
 from prompts import create_arxiv_query, expand_title, create_latex_document, de_latex, create_template
 from transformers import logging as transformers_logging
 
@@ -25,9 +25,9 @@ transformers_logging.set_verbosity_error()
 # Entry Point
 def main(title, gpt_model="gpt-3.5-turbo", max_papers=200):
 
-    info = "_" + str(gpt_model) + "_" + str(max_papers) 
-
     start_time = time.time()
+
+    joint_title = title.replace(" ", "_")
 
     # Process Title and Perform Arxiv Query
     expanded_title, arxiv_query, articles = process_title_and_query_arxiv(title, gpt_model)
@@ -36,16 +36,16 @@ def main(title, gpt_model="gpt-3.5-turbo", max_papers=200):
     selected_index, excluded_index, selected_sim, excluded_sim = filter_articles(expanded_title, articles, max_papers)
 
     # Save Article Reports
-    save_article_reports(title, articles, selected_index, excluded_index, selected_sim, excluded_sim, info)
+    save_article_reports(joint_title, articles, selected_index, excluded_index, selected_sim, excluded_sim)
 
     # Process Topic Modeling and Summarization
-    improved_summaries, topic_titles, topic_summaries, final_summary = topic_model_and_summarization(selected_index, articles, title, gpt_model, info)
+    improved_summaries, topic_titles, topic_summaries, final_summary = topic_model_and_summarization(selected_index, articles, title, joint_title, gpt_model)
 
     # Generate LaTeX Document
-    latex_doc = generate_latex_document(title, topic_titles, improved_summaries, final_summary, gpt_model)
+    latex_doc = generate_latex_document(title, joint_title, topic_titles, improved_summaries, final_summary, gpt_model)
 
     # Run Metrics (ROUGE, Readability, Similarity)
-    run_metrics(title, articles, selected_index, improved_summaries, topic_summaries, final_summary, topic_titles, latex_doc, start_time, info)
+    run_metrics(title, joint_title, articles, selected_index, improved_summaries, topic_summaries, final_summary, topic_titles, latex_doc, start_time)
 
 
 def process_title_and_query_arxiv(title, gpt_model):
@@ -85,16 +85,16 @@ def filter_articles(expanded_title, articles, max_papers):
     return selected_index, excluded_index, selected_sim, excluded_sim
 
 
-def save_article_reports(title, articles, selected_index, excluded_index, selected_sim, excluded_sim, info):
+def save_article_reports(title, articles, selected_index, excluded_index, selected_sim, excluded_sim):
     """Save the reports of included and excluded articles."""
     
     # Included articles report
     included_report = create_article_report("included", articles, selected_index, selected_sim)
-    save_text(included_report, "included_report", title, info)
+    save_text(included_report, "included_report", title, "reports")
 
     # Excluded articles report
     excluded_report = create_article_report("excluded", articles, excluded_index, excluded_sim)
-    save_text(excluded_report, "excluded_report", title, info)
+    save_text(excluded_report, "excluded_report", title, "reports")
 
 
 def create_article_report(report_type, articles, indices, sims):
@@ -102,11 +102,11 @@ def create_article_report(report_type, articles, indices, sims):
     report = f"Papers {report_type}:\n"
     for i in indices:
         article = articles[i]
-        report += f"\tid: {article.get('id')}\n\tname: {article.get('title')}\n\tsim: {sims[indices.index(i)]}\n\n"
+        report += f"\tarxiv id: {article.get('id')}\n\ttitle: {article.get('title')}\n\tsimilarity with input: {sims[indices.index(i)]}\n\n"
     return report
 
 
-def topic_model_and_summarization(selected_index, articles, title, gpt_model, info):
+def topic_model_and_summarization(selected_index, articles, title, joint_title, gpt_model):
     """Perform topic modeling and summarization."""
     abstracts = []
     ids=[]
@@ -118,7 +118,6 @@ def topic_model_and_summarization(selected_index, articles, title, gpt_model, in
       paper_names.append(articles[selected_index[i]].get("title"))
       #references.append(add_authors(articles[i].get("id")))
 
-    joint_title=title.replace(" ", "_")
     bib_tex_keys=[]
 
     for i in range(len(ids)):
@@ -130,11 +129,11 @@ def topic_model_and_summarization(selected_index, articles, title, gpt_model, in
       bibtex_key = bibtex_entry[key_start:key_end]
       bib_tex_keys.append(bibtex_key)
       #filename = str(bibtex_key) + ".bib"
-      save_bibtex(bibtex_entry, title, joint_title, info)
+      save_text(bibtex_entry, joint_title, joint_title, "bib")
 
 
     topic_model, dfs_by_topic, topic_titles, visualize_documents, topic_report = topic_model_pipeline(abstracts, SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'), gpt_model)
-    save_text(topic_report, "topic_report", title, info)
+    save_text(topic_report, "topic_report", joint_title, "reports")
 
     summarizer = pipeline("summarization", model="Falconsai/text_summarization")
     topic_summaries = summarize(topic_model, dfs_by_topic, summarizer, bib_tex_keys, paper_names)
@@ -150,20 +149,21 @@ def topic_model_and_summarization(selected_index, articles, title, gpt_model, in
     return improved_summaries, topic_titles, topic_summaries, final_summary
 
 
-def generate_latex_document(title, topic_titles, summaries, final_summary, gpt_model):
+def generate_latex_document(title, joint_title, topic_titles, summaries, final_summary, gpt_model):
     """Generate LaTeX document for the summaries."""
-    joint_title = title.replace(" ", "_")
+    
     latex_template = create_template(joint_title)
     
     ordered_titles = topic_titles[1:] + [topic_titles[0]]
     latex_doc = create_latex_document(title, len(summaries), final_summary, ordered_titles, latex_template, gpt_model)
     
-    save_to_tex(latex_doc, title, f"_{gpt_model}_{len(summaries)}")
+    save_text(latex_doc, f"{joint_title}-literature_review", title, "SLR")
+
 
     return latex_doc
 
 
-def run_metrics(title, articles, selected_index, improve_summaries, topic_summaries, final_summary, topic_titles, latex_doc, start_time, info):
+def run_metrics(title, joint_title, articles, selected_index, improve_summaries, topic_summaries, final_summary, topic_titles, latex_doc, start_time):
     """Run ROUGE, readability, and similarity metrics."""
     raw_abstracts = "\n".join([articles[i].get("abstract") for i in selected_index])
     de_latexed_doc = de_latex(latex_doc)
@@ -172,29 +172,29 @@ def run_metrics(title, articles, selected_index, improve_summaries, topic_summar
     cleaned_final_summary = re.sub(r'\\citep\{[^}]+\}', '', final_summary)
     cleaned_raw_summaries = re.sub(r'\\citep\{[^}]+\}', '', raw_summaries)
 
-    save_text(raw_abstracts, "raw_abstracts", title, info)
-    save_text(cleaned_raw_summaries, "raw_summaries", title, info)
-    save_text(cleaned_final_summary, "final_summary", title, info)
-    save_text(latex_doc, "latex_doc", title, info)
-    save_text(de_latexed_doc, "de_latex_doc", title, info)
+    save_text(raw_abstracts, "abstracts", joint_title, "generated_files")
+    save_text(cleaned_raw_summaries, "T5_summaries", joint_title, "generated_files")
+    save_text(cleaned_final_summary, "GPT_edited_summary", joint_title, "generated_files")
+    save_text(latex_doc, "SLR_latex", joint_title, "generated_files")
+    save_text(de_latexed_doc, "SLR", joint_title, "generated_files")
 
     
 
     # ROUGE Metrics
     rouge_scores = {
-        "raw_summaries": get_rouge(raw_abstracts, raw_summaries),
-        "final_summary": get_rouge(raw_abstracts, final_summary),
-        "de_latexed": get_rouge(raw_abstracts, de_latexed_doc)
+        "T5_summaries": get_rouge(raw_abstracts, raw_summaries),
+        "GPT_edited_summary": get_rouge(raw_abstracts, final_summary),
+        "SLR": get_rouge(raw_abstracts, de_latexed_doc)
     }
-    save_text(str(rouge_scores), "rouge_metrics", title, f"_{len(selected_index)}")
+    save_text(rouge_scores, "rouge_metrics", joint_title, "metrics")
 
     # Readability Metrics
     readability_scores = {
-        "raw_abstracts": readability.getmeasures(tokenit(raw_abstracts), lang='en')['readability grades'],
-        "final_summary": readability.getmeasures(tokenit(final_summary), lang='en')['readability grades'],
-        "de_latexed": readability.getmeasures(tokenit(de_latexed_doc), lang='en')['readability grades']
+        "T5_summaries": readability.getmeasures(tokenit(raw_abstracts), lang='en')['readability grades'],
+        "GPT_edited_summary": readability.getmeasures(tokenit(final_summary), lang='en')['readability grades'],
+        "SLR": readability.getmeasures(tokenit(de_latexed_doc), lang='en')['readability grades']
     }
-    save_text(str(readability_scores), "readability_metrics", title, f"_{len(selected_index)}")
+    save_text(readability_scores, "readability_metrics", joint_title, "metrics")
 
     # Similarity Metrics
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -220,15 +220,13 @@ def run_metrics(title, articles, selected_index, improve_summaries, topic_summar
 
     avg_random_score = np.mean(random_scores)
 
-    path_name = title+info
-
-    plot_similarity_scores(bert_scores, avg_random_score, title, path_name)
+    plot_similarity_scores(bert_scores, avg_random_score, joint_title)
     print(f"\nFull computation time: {time.time() - start_time} seconds")
 
 
-def plot_similarity_scores(bert_scores, avg_random_score, title, path_name):
+def plot_similarity_scores(bert_scores, avg_random_score, joint_title):
   """Plot and save the similarity scores as a bar chart."""
-  labels = ['Abstracts', 'Summary', 'LaTeX Document', 'Random']
+  labels = ['Abstracts', 'GPT edited Summary', 'SLR Document', 'Random Document']
   
   values = [score[0] for score in bert_scores] + [avg_random_score]
   colors = ['skyblue'] * len(bert_scores) + ['lightcoral']  # Color for Random separately
@@ -245,7 +243,7 @@ def plot_similarity_scores(bert_scores, avg_random_score, title, path_name):
   plt.gca().set_alpha(0.8)
   plt.tight_layout()
 
-  plt.savefig(f"summaries/{path_name}/results/similarity_scores_bar.png")
+  plt.savefig(f"output/{joint_title}/metrics/similarity_scores_bar.png")
   plt.show()
 
 
