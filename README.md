@@ -1,6 +1,8 @@
-# AI-Driven Systematic Literature Review Tool
+# PROMPTHEUS: A Human-Centered Pipeline to Streamline SLRs with LLMs
 
 This AI-driven tool is designed to automate the systematic literature review (SLR) process. It uses OpenAI's GPT models, topic modeling, and other natural language processing techniques to refine and enhance machine-generated summaries from academic papers.
+
+![Diagram of the PROMPTHEUS Framework](./images/PROMPTHEUS.png)
 
 ## Features
 
@@ -10,6 +12,7 @@ This AI-driven tool is designed to automate the systematic literature review (SL
 - **Summarization**: Refines and enhances machine-generated summaries using GPT models.
 - **LaTeX Document Generation**: Creates a LaTeX-formatted document for the final output.
 - **Metrics**: Computes ROUGE scores, readability scores, and similarity metrics between documents and input.
+- **LaTeX Document Generation**: Automatically generates a LaTeX-formatted document for the final output of the systematic literature review.
 
 ## Requirements
 
@@ -44,6 +47,7 @@ The setup.sh script will:
 
 ## Usage
 After installation, you can run the tool via the command line to refine literature reviews.
+The output will be saved as a LaTeX-formatted document, which you can further refine or directly compile into a PDF for the final report.
 
 1. **Basic Usage**:
 To refine a literature review for a specific title, run:
